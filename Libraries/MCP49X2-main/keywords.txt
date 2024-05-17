@@ -1,0 +1,46 @@
+#######################################
+# Syntax Coloring Map For the DACs (MCP49X2)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+MCP49X2	KEYWORD1
+MCP4902	KEYWORD1
+MCP4912	KEYWORD1
+MCP4922	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+end 	KEYWORD2
+gain	KEYWORD2
+vout	KEYWORD2
+vref	KEYWORD2
+enable 	KEYWORD2
+disable	KEYWORD2
+latch	KEYWORD2
+read	KEYWORD2
+write 	KEYWORD2
+setSPI	KEYWORD2
+protocol	KEYWORD2
+enable_buffer	KEYWORD2
+disable_buffer	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+MCP49X2_DEFAULT_CS_PIN 	LITERAL1
+MCP49X2_DEFAULT_LDAC_PIN	LITERAL1
+MCP49X2_DEFAULT_SHDN_PIN 	LITERAL1
+MCP49X2_DEFAULT_VREF_A 	LITERAL1
+MCP49X2_DEFAULT_VREF_B	LITERAL1
+MCP49X2_1XGAIN 	LITERAL1
+MCP49X2_2XGAIN	LITERAL1
+MCP4902_DAC_DATA	LITERAL1
+MCP4912_DAC_DATA 	LITERAL1
+MCP4922_DAC_DATA	LITERAL1
