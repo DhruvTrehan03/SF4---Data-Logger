@@ -11,10 +11,9 @@
 
 #define SS_PIN 10 // The Arduino pin used for the slave select / chip select
 #define LDAC_PIN 7 // The Arduino pin used for the LDAC (output synchronization) feature
-#define VA A0
-#define VB A1
 
 float i =0;
+int incomingAudio;
 
 // Set up the DAC. 
 // First argument: DAC model (MCP4902, MCP4912, MCP4922)
@@ -48,8 +47,17 @@ void setup() {
 
 
 void loop() {
-  float sound = 125*(sin(i*4*3.14)+1);
-  dac.output2((sound),(-sound));
-  Serial.println(sound);
-  i+= 0.5;
+  incomingAudio = analogRead(A0);//read input from A0
+  incomingAudio = (incomingAudio+1)/4 - 1;
+  if (incomingAudio<0){ //deal with negative numbers
+    incomingAudio = 0;
+  }
+
+  dac.output2((incomingAudio),(-incomingAudio));
+  // Serial.print(incomingAudio);
+  // Serial.print(',');
+  // Serial.print(0);
+  // Serial.print(',');
+  // Serial.println(255);
+
 }

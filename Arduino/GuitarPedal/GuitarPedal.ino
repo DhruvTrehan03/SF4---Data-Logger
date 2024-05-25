@@ -1,16 +1,20 @@
-#define out_DAC0 2
-#define out_DAC1 3
+#include <SPI.h>         // Remember this line!
+#include <DAC_MCP49xx.h>
 
-volatile byte adcPin = 0;
-volatile byte prevadcPin = 0;
+#define SS_PIN 10 // The Arduino pin used for the slave select / chip select
+#define LDAC_PIN 7 // The Arduino pin used for the LDAC (output synchronization) feature
 
-volatile int input;
+int input;
+byte adcPin = 0;
+
+DAC_MCP49xx dac(DAC_MCP49xx::MCP4902, SS_PIN, LDAC_PIN);     //the first argument was changed from MCP49x2(original code) to MCP4902 to apply to this DAC
+
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   setupADC();
-  setupPWM();
+  setupDAC();
 }
 
 void setupADC() {
@@ -21,9 +25,10 @@ void setupADC() {
 
   ADMUX = bit (REFS0) | (adcPin & 0x07) | (1 << ADLAR);
 
-  // ADCSRA |= (1 << ADPS2); // 16 prescaler, 76.9kHz
-  ADCSRA |= (1 << ADPS2) | (1 << ADPS0); // 32 prescaler - 16mHz/32=500kHz 500kHz/13=38.5kHz
-  ADCSRA |= (1 << ADIE); //enable interrupts when measurement complete
+  //ADCSRA |= (1 << ADPS2); // 16 prescaler, 76.9kHz
+  // ADCSRA |= (1 << ADPS2) | (1 << ADPS0); // 32 prescaler - 16mHz/32=500kHz 500kHz/13=38.5kHz
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // 128 prescaler, 9.6kHz;
+  ADCSRA |= (1 << ADIE);
   ADCSRA |= (1 << ADATE); // enabble auto trigger
   ADCSRA |= (1 << ADEN); //enable ADC
   ADCSRA |= (1 << ADSC); //start ADC measurements
@@ -38,27 +43,31 @@ void setupADC() {
   sei(); //enable interrupts
 }
 
-void setupPWM() { 
-  // Double check this bit
-  TCCR1A = (((PWM_QTY - 1) << 5) | 0x80 | (PWM_MODE << 1));
-  TCCR1B = ((PWM_MODE << 3) | 0x11); // ck/1
-  TIMSK1 = 0x20; // interrupt on capture interrupt
-  ICR1H = (PWM_FREQ >> 8);
-  ICR1L = (PWM_FREQ & 0xff);
-  DDRB |= ((PWM_QTY << 1) | 0x02); // turn on outputs
+void setupDAC() { 
+  // Set the SPI frequency to 1 MHz (on 16 MHz Arduinos), to be safe.
+  // DIV2 = 8 MHz works for me, though, even on a breadboard.
+  // This is not strictly required, as there is a default setting.
+  dac.setSPIDivider(SPI_CLOCK_DIV16);
+  // Use "port writes", see the manual page. In short, if you use pin 10 for
+  // SS (and pin 7 for LDAC, if used), this is much faster.
+  // Also not strictly required (no setup() code is needed at all).
+  dac.setPortWrite(true);
+  // Pull the LDAC pin low automatically, to synchronize output
+  // This is true by default, however.
+  dac.setAutomaticallyLatchDual(true);
 }
  
 void loop() {
 }
 
 ISR(ADC_vect) {
-  ADC_low = ADCL;
-  ADC_high = ADCH;
-  input = ((ADC_high << 8) | ADC_low) + 0x8000; // make a signed 16b value
-
+  input = ADCH;
+  // Serial.print(input);
+  // Serial.print(',');
+  // Serial.print(0);
+  // Serial.print(',');
+  // Serial.println(255);
+  dac.output2((input),(-input));
   // Digital signal processing here:
 
-  // Write to digital output here:
-  // OCR1AL = ((input + 0x8000) >> 8); // convert to unsigned, send out high byte
-  // OCR1BL = input; // send out low byte
 }
