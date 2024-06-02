@@ -11,7 +11,7 @@ DAC_MCP49xx dac(DAC_MCP49xx::MCP4902, SS_PIN, LDAC_PIN);     //the first argumen
 
 
 void setup() {
-  Serial.begin(115200);
+  // Serial.begin(115200);
 
   setupADC();
   setupDAC();
