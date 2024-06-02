@@ -9,8 +9,8 @@ float incomingAudio;
 int pot1, pot2;
 bool mode = 0; // 0 is playing mode, 1 is node selector and FFT
 
-int effect1 = 3;
-int effect2 = 1;
+int effect1 = 1;
+int effect2 = 6;
 
 DAC_MCP49xx dac(DAC_MCP49xx::MCP4902, SS_PIN, LDAC_PIN); // Set up the DAC. First argument: DAC model (MCP4902, MCP4912, MCP4922). Second argument: SS pin (10 is preferred). (The third argument, the LDAC pin, can be left out if not used)
 
@@ -21,15 +21,14 @@ int chorus_i = 0;
 int chorus_sin_i = 0;
 const unsigned int MAX_DELAY = 1500;
 // Can edit these
-float fuzz_gain = 1.0;
-float tremolo_modulation_freq = 0.1;
-float chorus_modulation_freq = 0.1;
-int delay_time = 1000;
-int chorus_time = 1000;
+float fuzz_gain;
+float tremolo_modulation_freq;
+int delay_time;
+float chorus_modulation_freq;
+
 byte delay_buffer[MAX_DELAY+1];
 
 void setup() {
-  Serial.begin(9600);
   dac.setSPIDivider(SPI_CLOCK_DIV16); // Set the SPI frequency to 1 MHz (on 16 MHz Arduinos), to be safe.
   dac.setPortWrite(true);
   dac.setAutomaticallyLatchDual(true); // Pull the LDAC pin low automatically, to synchronize output
@@ -37,8 +36,8 @@ void setup() {
 
 void loop() {
   incomingAudio = analogRead(A0) / 511.5 - 1.0; // From -1 to 1
-  pot1 = (int)analogRead(A1)/20*20; // Values go from 0-1023 but rounded down to nearest 20
-  pot2 = (int)analogRead(A2)/20*20;
+  pot1 = (int)analogRead(A1)/100*100; // Values go from 0-1000 in 100 intervals
+  pot2 = (int)analogRead(A2)/100*100;
 
   float output = 0.0;
 
@@ -47,22 +46,22 @@ void loop() {
       output = incomingAudio;
       break;
     case 2:
-      fuzz_gain = pot1/72.9 + 1;
+      fuzz_gain = pot1/50 + 1;
       output += Fuzz(incomingAudio);
       break;
     case 3:
-      tremolo_modulation_freq = pot1/1020.0 + 0.1;
+      tremolo_modulation_freq = pot1/1112.0 + 0.1;
       output += Tremolo(incomingAudio);
       break;
     case 4:
       output += Overdrive(incomingAudio);
       break;
     case 5:
-      delay_time = pot1;
+      delay_time = (float)pot1/0.75+150;
       output += Delay(incomingAudio);
       break;
     case 6:
-      chorus_time = pot1;
+      chorus_modulation_freq = (float)pot1/10.0+0.1;
       output += Chorus(incomingAudio);
       break;
   }
@@ -72,41 +71,28 @@ void loop() {
       output = output;
       break;
     case 2:
-      fuzz_gain = pot2/68.0 + 1;
+      fuzz_gain = pot2/50 + 1;
       output = Fuzz(output);
       break;
     case 3:
-      tremolo_modulation_freq = pot2/1020.0 + 0.1;
+      tremolo_modulation_freq = pot2/1112.0 + 0.1;
       output = Tremolo(output);
       break;
     case 4:
       output = Overdrive(output);
       break;
     case 5:
-      delay_time = pot2;
+      delay_time = (float)pot2/0.75+150;
       output = Delay(output);
       break;
     case 6:
-      chorus_time = pot2;
+      chorus_modulation_freq = (float)pot2/10.0+0.1;;
       output = Chorus(output);
       break;
   }
   
   output = (output+1.0)*127.5;
   dac.output2((output),(-output));
-
-
-  // for (int i = 0; i < 360; i += 1) {
-  //   float sine = 511.5 * sin(i * M_PI * 20 / 180) + 511.5;
-  //   Serial.print((byte)((sine+1)/4-1));
-  //   Serial.print(',');
-  //   Serial.print(Delay(sine));
-  //   Serial.print(',');
-  //   Serial.print(0);
-  //   Serial.print(',');
-  //   Serial.println(255);
-  //   delay(10);
-  // }
 }
 
 void setup_playMode() {
@@ -150,7 +136,7 @@ float Tremolo(float signal) {
 
 float Delay(float signal) {
   float output;
-  int x = (int)((signal+1.0)*127.5); // From 0 to 255
+  byte x = (byte)((signal+1.0)*127.5); // From 0 to 255
 
   delay_buffer[delay_i] = (byte)x;
   delay_i++;
@@ -158,16 +144,17 @@ float Delay(float signal) {
   
   output = delay_buffer[delay_i - delay_time];
   if (delay_i < delay_time) output = delay_buffer[MAX_DELAY+1+(delay_i-delay_time)];
-  output = output + x; // 0 to 511
+  output = output + (int)x; // 0 to 511
 
   return output/255.5-1.0; // -1 to 1
 }
 
 float Chorus(float signal) {
   float output;
-  int x = (int)((signal+1.0)*127.5); // From 0 to 255
+  int chorus_time = 1;
+  byte x = (byte)((signal+1.0)*127.5); // From 0 to 255
 
-  delay_buffer[chorus_i] = (byte)x;
+  delay_buffer[chorus_i] = x;
   chorus_i++;
   if (chorus_i  > MAX_DELAY) chorus_i = 0;
 
@@ -177,8 +164,7 @@ float Chorus(float signal) {
   
   output = delay_buffer[chorus_i - chorus_time];
   if (chorus_i < chorus_time) output = delay_buffer[MAX_DELAY+1+(chorus_i-chorus_time)];
-
-  output = output + x; // 0 to 511
+  output = output + (int)x; // 0 to 511
 
   return output/255.5-1.0; // -1 to 1
 }
