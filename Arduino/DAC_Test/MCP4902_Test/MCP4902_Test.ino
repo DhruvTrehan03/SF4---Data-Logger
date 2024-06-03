@@ -3,12 +3,12 @@
 
 #define SS_PIN 10
 #define LDAC_PIN 7
+#define BUTTON_PIN 2
 
 float i = 0;
 float incomingAudio;
 int pot1, pot2;
-bool mode = 0; // 0 is playing mode, 1 is node selector and FFT
-
+volatile bool mode = 0; // 0 is playing mode, 1 is node selector and FFT
 int effect1 = 1;
 int effect2 = 6;
 
@@ -29,12 +29,31 @@ float chorus_modulation_freq;
 byte delay_buffer[MAX_DELAY+1];
 
 void setup() {
+  Serial.begin(9600);
   dac.setSPIDivider(SPI_CLOCK_DIV16); // Set the SPI frequency to 1 MHz (on 16 MHz Arduinos), to be safe.
   dac.setPortWrite(true);
   dac.setAutomaticallyLatchDual(true); // Pull the LDAC pin low automatically, to synchronize output
+
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), ISR_button_pressed, RISING);
 }
 
 void loop() {
+  switch(mode) {
+    case(0):
+      // playMode();
+      break;
+    case(1):
+      uploadMode();
+      break;
+  }
+  delay(1000);
+}
+
+void ISR_button_pressed() {
+  mode = !mode;
+}
+
+void playMode() {
   incomingAudio = analogRead(A0) / 511.5 - 1.0; // From -1 to 1
   pot1 = (int)analogRead(A1)/100*100; // Values go from 0-1000 in 100 intervals
   pot2 = (int)analogRead(A2)/100*100;
@@ -95,8 +114,16 @@ void loop() {
   dac.output2((output),(-output));
 }
 
-void setup_playMode() {
+void uploadMode() {
+  Serial.begin(115200);
+  Serial.setTimeout(1);
 
+  while (!Serial.available());
+  int serialInput = Serial.readString().toInt();
+  effect2 = serialInput%10;
+  effect1 = (serialInput/10)%10;
+  Serial.print(0);
+  Serial.end();
 }
 
 float Overdrive(float signal) {
@@ -127,7 +154,8 @@ float Fuzz(float signal) {
 float Tremolo(float signal) {
   float output;
 
-  output = sin((float)tremolo_i * M_PI * tremolo_modulation_freq / 180.0) * signal;
+  // output = sin((float)tremolo_i * M_PI * tremolo_modulation_freq / 180.0) * signal;
+  output = (1.0 + sin((float)tremolo_i * M_PI * tremolo_modulation_freq / 180.0)) * signal/2.0;
   tremolo_i++;
   if (tremolo_i >= 360) tremolo_i = 0;
 
