@@ -1,59 +1,55 @@
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-
-# Only needed for access to command line arguments
 import sys
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QWidget
+from PyQt6.QtGui import QColor
 
-
-# Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Widgets App")
+        self.setWindowTitle("Red Light Example")
+        self.setGeometry(100, 100, 400, 200)
 
-        layout = QVBoxLayout()
-        widgets = [
-            QCheckBox,
-            QComboBox,
-            QDateEdit,
-            QDateTimeEdit,
-            QDial,
-            QDoubleSpinBox,
-            QFontComboBox,
-            QLCDNumber,
-            QLabel,
-            QLineEdit,
-            QProgressBar,
-            QPushButton,
-            QRadioButton,
-            QSlider,
-            QSpinBox,
-            QTimeEdit,
-        ]
+        # Create main layout
+        self.main_layout = QVBoxLayout()
 
-        for w in widgets:
-            layout.addWidget(w())
+        # Create label and light layout
+        self.label_layout = QHBoxLayout()
 
-        widget = QWidget()
-        widget.setLayout(layout)
+        # Label
+        self.label = QLabel("Status:")
+        self.label_layout.addWidget(self.label)
 
-        # Set the central widget of the Window. Widget will expand
-        # to take up all the space in the window by default.
-        self.setCentralWidget(widget)
-# You need one (and only one) QApplication instance per application.
-# Pass in sys.argv to allow command line arguments for your app.
-# If you know you won't use command line arguments QApplication([]) works too.
-app = QApplication(sys.argv)
+        # Light
+        self.light = QLabel()
+        self.light.setFixedSize(20, 20)
+        self.light.setStyleSheet("background-color: gray; border-radius: 10px;")
+        self.label_layout.addWidget(self.light)
 
-# Create a Qt widget, which will be our window.
-window = MainWindow()
-window.show()  # IMPORTANT!!!!! Windows are hidden by default.
+        # Add label and light layout to main layout
+        self.main_layout.addLayout(self.label_layout)
 
-# Start the event loop.
-app.exec()
+        # Button to toggle light
+        self.toggle_button = QPushButton("Toggle Light")
+        self.toggle_button.clicked.connect(self.toggle_light)
+        self.main_layout.addWidget(self.toggle_button)
 
+        # Create central widget
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.main_layout)
+        self.setCentralWidget(self.central_widget)
 
-# Your application won't reach here until you exit and the event
-# loop has stopped.
+        self.light_on = False
+
+    def toggle_light(self):
+        if self.light_on:
+            self.light.setStyleSheet("background-color: gray; border-radius: 10px;")
+        else:
+            self.light.setStyleSheet("background-color: red; border-radius: 10px;")
+
+        self.light_on = not self.light_on
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
