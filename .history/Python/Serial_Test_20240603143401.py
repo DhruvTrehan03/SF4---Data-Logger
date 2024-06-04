@@ -12,6 +12,6 @@ def write_read(x):
 
 
 while True:
-    value  = arduino.readline()
-    time.sleep(0.05)
+    num = input("Enter a number: ")
+    value  = write_read(num)
     print(value)

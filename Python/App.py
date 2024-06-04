@@ -78,8 +78,8 @@ class MainWindow(QMainWindow):
 
         self.dialLayout.addWidget(self.dial_2)
 
-        self.create_dial_labels_1(self.dial, [ "Clean", "Fuzz", "Tremelo", "Overdrive", "Delay", "Chorus"])
-        self.create_dial_labels_2(self.dial_2,  [ "Clean", "Fuzz", "Tremelo", "Overdrive", "Delay", "Chorus"])
+        self.create_dial_labels_1(self.dial, [ "Clean", "Fuzz", "Tremolo", "Overdrive", "Delay", "Chorus"])
+        self.create_dial_labels_2(self.dial_2,  [ "Clean", "Fuzz", "Tremolo", "Overdrive", "Delay", "Chorus"])
 
 
         # Horizontal layout for the label and button to keep them the same size
@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
                 # Create a QTimer to periodically read from the serial port
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_label)
-        self.timer.start(1000)  # Update every 1000 milliseconds (1 second)
+        self.timer.start(100)  # Update every 1000 milliseconds (1 second)
 
 
         # Connect signals to slots
@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
             self.light.setStyleSheet("background-color: green; border-radius: 10px;")
 
         try:
-            self.ser = serial.Serial(arduino_ports[0])
+            self.ser = serial.Serial(arduino_ports[0], baudrate=9600)
         except:
             self.light.setStyleSheet("background-color: red; border-radius: 10px;")
             self.connect_state = 0
